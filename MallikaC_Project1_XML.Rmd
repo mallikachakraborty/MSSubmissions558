@@ -1,0 +1,109 @@
+---
+title: "ST 558 Project1_XML"
+author: "Mallika Chakraborty"
+date: "10/16/2019"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval=TRUE, message=FALSE)
+library(tidyverse)
+library(XML)
+library(knitr)
+setwd("/Users/mallikachakraborty/Downloads/ST558/")
+```
+
+#XML
+
+##Description  
+Extensible Markup Language (XML) allows us to describe and organize information in ways that are easily understandable by both humans and computers. It has a variety of uses for Web, e-business, and portable applications.
+We define this markup language in a document type definition (DTD) or XML Schema file(XSL) that functions as the standard way to describe the information. Using XML to share standardized information means we are no longer required to write programs to focus on proprietary software or convert and translate different data formats.
+
+##R Package  
+There are 2 commonly used packages in R to read and write JSON format data.
+1.XML
+2.XML2
+
+XML is being used in this code as the output was nicely formed in a dataframe, hence easier to parse.
+
+##Data Description
+This data approach student achievement in secondary education of two Portuguese schools. The data attributes include student grades, demographic, social and school related features) and it was collected by using school reports and questionnaires.
+
+There are 395 observations of 33 variables. Attributes which we are going to use in this script are as follows:
+sex - student's sex (binary: 'F' - female or 'M' - male) 
+age - student's age (numeric: from 15 to 22)
+studytime - weekly study time (numeric: 1 - <2 hours, 2 - 2 to 5 hours, 3 - 5 to 10 hours, or 4 - >10 hours) 
+Mjob-mother's job (nominal: 'teacher', 'health' care related, civil 'services' (e.g. administrative or police), 'at_home' or 'other') 
+G1 - first period grade (numeric: from 0 to 20) 
+G2 - second period grade (numeric: from 0 to 20) 
+G3 - final grade (numeric: from 0 to 20, output target)
+
+##Objective
+
+We would like to do basic data exploration to find out how various factors affect student's score.
+
+##Code & Results
+i. To start with we are reading the raw data file of xml format.
+```{r}
+student_data_raw <- XML::xmlToDataFrame("/Users/mallikachakraborty/Downloads/ST558/558_project1/student.xml")
+#str(student_data_raw)
+```
+
+ii. We will convert the columns from factor to numeric datatype
+```{r}
+student_data_raw$school<-as.character(student_data_raw$school)
+student_data_raw$age<-as.numeric(student_data_raw$age)
+student_data_raw$studytime<-as.numeric(student_data_raw$studytime)
+student_data_raw$G1<-as.numeric(student_data_raw$G1)
+student_data_raw$G2<-as.numeric(student_data_raw$G2)
+student_data_raw$G3<-as.numeric(student_data_raw$G3)
+student_data_raw$absences<-as.numeric(student_data_raw$absences)
+```
+
+iii. Basic statistics
+```{r}
+student_data_raw %>% group_by(sex) %>% summarise(`no of students` = n(), `mean score` = mean(G3), `std dev of score` = sd(G3), `median score` = median(G3))
+```
+
+
+
+iv. We would like to check here if student's study hour varies with mother's occupation 
+```{r}
+table(student_data_raw$Mjob, student_data_raw$studytime)
+```
+
+We don't find that students tend to study more when mother is at home.
+
+
+
+v. We will like to see if final score look similar for male and female students
+```{r}
+ggplot(student_data_raw,aes(x = sex, y = G3))+
+  geom_boxplot()+
+  stat_summary(fun.y=mean, geom="point")+
+  labs(title = "Total score distribution for student's sex", x = "Sex", y = "Total score")
+```
+
+vi. Checking if studytime has any effect on score. Also plotting mean score for each sex
+```{r}
+ggplot(student_data_raw,aes(x = studytime, y = G3, color=sex))+
+  geom_boxplot(aes(group=studytime), outlier.shape = 1)+
+  labs(title = "Boxplot for total score distribution vs. student's studytime in hrs", x = "studytime", y = "Total score")+
+  stat_summary(fun.y=mean, geom="point")+
+  theme_classic()
+```
+
+vii. Checking relationship between first period and second period score
+
+```{r}
+ggplot(student_data_raw,aes(x = G1, y = G2))+
+  geom_point(shape=18, color="blue")+
+  geom_smooth(method=lm)+
+  facet_wrap(~sex)+
+  labs(title = "Scatter plot for period1 score vs period 2 score", x = "period1 score", y = "period2 score")
+```
+
+

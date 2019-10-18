@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE, eval=TRUE, message=FALSE)
 library(jsonlite)
 library(rjson)
 library(tidyverse)
-library(XML)
+library(knitr)
 setwd("/Users/mallikachakraborty/Downloads/ST558/")
 ```
 #JSON  
@@ -21,14 +21,16 @@ setwd("/Users/mallikachakraborty/Downloads/ST558/")
 ##Description  
 
 JSON stands for JavaScript Object Notation. The JSON format is often used for serializing and transmitting structured data over a network connection. It is used primarily to transmit data between a server and web application.
-JSON is often used when data is sent from a server to a web page.
+JSON is often used when data is sent from a server to a web page. The overhead for transforming JSON is much smaller than other related datatypes (e.g. XML).
 JSON data is written as name/value pairs. A name/value pair consists of a field name (in double quotes), followed by a colon, followed by a value.Data is separated by commas.Curly braces hold objects.Square brackets hold arrays.
 
 ##R Package  
 There are 3 commonly used packages in R to read and write JSON format data.
-1. jsonlite: 
+1. jsonlite 
 2. rjson
 3. rjsonio
+
+jsonlite is used in this program because the output dataframe was easier to parse compared to the large lists from rjson and rjasonio.
 
 ##Data Description
 The dataet is: Hate Crimes by County and Bias Type: Beginning 2010.
@@ -56,7 +58,7 @@ i. To start with we are reading the raw data file of json format.
 ```{r read_Data}
 #reading the raw data file
 
-ff_hate_crimes <- '/Users/mallikachakraborty/Downloads/ST558/hate_crimes.json'
+ff_hate_crimes <- '/Users/mallikachakraborty/Downloads/ST558/558_project1/hate_crimes.json'
 hate_crimes_data_raw<-jsonlite::fromJSON(txt=ff_hate_crimes)
 ```
 
@@ -70,7 +72,8 @@ crimes_data_trnspsd <- gather(hate_crimes_data_raw, victim_typ, tot_incident, `A
 iii. We are now going to plot the victim type vs no of incidents
 ```{r}
 #plotting victim_typ vs. total incidents
-ggplot(crimes_data_trnspsd,aes(x=victim_typ,y=tot_incident))+geom_bar(stat="identity")+
+ggplot(crimes_data_trnspsd,aes(x=victim_typ,y=tot_incident))+
+  geom_bar(stat="identity", fill="red")+
   coord_flip()
 ```
 
@@ -83,29 +86,37 @@ hate_crime_typ_sumry<- crimes_data_trnspsd %>% group_by(`Crime Type`) %>% filter
 
 ```{r}
 hate_crime_typ_sumry%>%group_by(victim_typ)%>%summarise(cnt_incidents=sum(tot_incident))%>%
-ggplot(aes(x=victim_typ,y=cnt_incidents))+geom_bar(stat="identity")+
+ggplot(aes(x=victim_typ,y=cnt_incidents))+
+  geom_bar(stat="identity", fill="red")+
+  labs(title = "Incident count by victim type", x = "victim type", y = "count of incidents")+
   coord_flip()
 ```
+
 This is much better to show which groups are primary target for such crimes.
 
 iv. Next we are going to create a contigency table to find out number of incidents by County vs. Crime type.
 ```{r}
 table(crimes_data_trnspsd$County, crimes_data_trnspsd$`Crime Type`) 
 ```
-We are seeing here few counties have quite high incidents reported. So, we will create new dataframe with 
+We are seeing here few counties have quite high incidents reported.  
 
-v.
+v. Before we go county level details, let's see how different victim type are divided between crime types.
+
 ```{r}
-ggplot(hate_crime_typ_sumry, aes(x=victim_typ,y=tot_incident, fill=hate_crime_typ_sumry$`Crime Type`))+geom_bar(stat="identity", position='dodge')+
-  labs(title = "??\n", x = "total incidentse", y = "count of incidents", legend = "crime type\n")+
+ggplot(hate_crime_typ_sumry, aes(x=victim_typ,y=tot_incident, fill=`Crime Type`))+
+  geom_bar(stat="identity", position='dodge')+
+  labs(title = "Incident count by victim type and crime type", x = "victim type", y = "count of incidents", legend = "crime type\n")+
   coord_flip()
 ```
-We find Anti-Jewish crime is reported more than the other types.
+We again find Anti-Jewish crime is reported more than the other types. But, Anti-gay male also reported almost same number of times as Jewish victim.
 
-vi.
+vi. Now we are delving into county level details.
+
 ```{r}
 hate_crime_typ_sumry%>% filter(victim_typ=="Anti-Jewish")%>%
-ggplot(aes(x=County,y=tot_incident))+geom_bar(stat="identity")+
+ggplot(aes(x=County,y=tot_incident))+
+  geom_bar(stat="identity", fill="red")+
+  labs(title = "Incident count by county", x = "county", y = "count of incidents")+
   coord_flip()
 ```
 
@@ -114,47 +125,11 @@ The Kings county has more crimes reported.
 vii.
 ```{r}
 hate_crime_typ_sumry%>% filter(County=="Kings")%>%
-  ggplot(aes(x=victim_typ,y=tot_incident))+geom_bar(stat="identity")+
+  ggplot(aes(x=victim_typ,y=tot_incident))+
+  geom_bar(stat="identity", fill="red")+
+  labs(title = "Incident count at Kings county", x = "victim type", y = "count of incidents")+
   coord_flip()
 
 ```
 
-
-
-
-
-#XML
-
-##Description  
-
-
-##R Package  
-XML
-
-XML2
-
-##Data Description
-This data approach student achievement in secondary education of two Portuguese schools. The data attributes include student grades, demographic, social and school related features) and it was collected by using school reports and questionnaires.
-
-##Code & Results
-```{r}
-student_data_raw <- XML::xmlToDataFrame("student.xml")
-str(student_data_raw)
-```
-
-```{r}
-student_data_raw$school<-as.character(student_data_raw$school)
-student_data_raw$age<-as.numeric(student_data_raw$age)
-student_data_raw$G1<-as.numeric(student_data_raw$G1)
-student_data_raw$G2<-as.numeric(student_data_raw$G2)
-student_data_raw$G3<-as.numeric(student_data_raw$G3)
-```
-
-```{r}
-ggplot(student_data_raw,aes(x = sex, y = G3))+geom_boxplot()
-```
-
-```{r}
-ggplot(student_data_raw,aes(x = G1, y = G2))+geom_point()+geom_smooth(stat="smooth")
-```
 
