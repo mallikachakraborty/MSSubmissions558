@@ -1,0 +1,160 @@
+---
+title: "ST 558 Project1_JSON"
+author: "Mallika Chakraborty"
+date: "10/16/2019"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval=TRUE, message=FALSE)
+library(jsonlite)
+library(rjson)
+library(tidyverse)
+library(XML)
+setwd("/Users/mallikachakraborty/Downloads/ST558/")
+```
+#JSON  
+
+##Description  
+
+JSON stands for JavaScript Object Notation. The JSON format is often used for serializing and transmitting structured data over a network connection. It is used primarily to transmit data between a server and web application.
+JSON is often used when data is sent from a server to a web page.
+JSON data is written as name/value pairs. A name/value pair consists of a field name (in double quotes), followed by a colon, followed by a value.Data is separated by commas.Curly braces hold objects.Square brackets hold arrays.
+
+##R Package  
+There are 3 commonly used packages in R to read and write JSON format data.
+1. jsonlite: 
+2. rjson
+3. rjsonio
+
+##Data Description
+The dataet is: Hate Crimes by County and Bias Type: Beginning 2010.
+
+Under New York State’s Hate Crime Law (Penal Law Article 485), a person commits a hate crime when one of a specified set of offenses is committed targeting a victim because of a perception or belief about their race, color, national origin, ancestry, gender, religion, religious practice, age, disability, or sexual orientation, or when such an act is committed as a result of that type of perception or belief. These types of crimes can target an individual, a group of individuals, or public or private property. DCJS submits hate crime incident data to the FBI’s Uniform Crime Reporting (UCR) Program. Information collected includes number of victims, number of offenders, type of bias motivation, and type of victim.
+
+There are 423 observation of 44 variables.
+
+The variables are as follows:
+**County**:Location where the crime was reported
+**Year**: Year the crime incident was reported
+**Crime Type**:Category of crime defined by the FBI
+This followed by **37 columns containing Count of incidents with a reported victim types**.
+Lastly, 
+**Total Incidents**: Sum of hate crime incidents reported.  Each incident includes a single bias type
+**Total Victims**: Unique count of victims reported
+**Total Offenders**: Unique count of offenders reported. Reporting on the number of offenders may be incomplete, partly due to the fact that some property crimes do not involve direct contact between the target and offender
+
+##Objective
+Here we are going to explore if any particular religion or skin color is primary target for hate crimes. Also, we will try to find out which county has most of the crimes.Finally, we are going to see if there is any relationship between religion based crime and skin color.
+
+##Code & Results
+
+i. To start with we are reading the raw data file of json format.
+```{r read_Data}
+#reading the raw data file
+
+ff_hate_crimes <- '/Users/mallikachakraborty/Downloads/ST558/hate_crimes.json'
+hate_crimes_data_raw<-jsonlite::fromJSON(txt=ff_hate_crimes)
+```
+
+ii. The victim types are spread across multiple columns. To make it easy to calculate, we are going to ranspose the victim tyoes in a column and corresponding counts in a separate column. Along this process,we will filter out if the count of incident is 0 for that victim type, year and county combination.
+
+```{r}
+#convert the crime victim type to rows
+crimes_data_trnspsd <- gather(hate_crimes_data_raw, victim_typ, tot_incident, `Anti-Male`:`Anti-Mental Disability`) %>% filter(tot_incident>0)
+```
+
+iii. We are now going to plot the victim type vs no of incidents
+```{r}
+#plotting victim_typ vs. total incidents
+ggplot(crimes_data_trnspsd,aes(x=victim_typ,y=tot_incident))+geom_bar(stat="identity")+
+  coord_flip()
+```
+
+As we can see from above graph, there are few types which are of very less number of incident reported. Hence, we are going to filter them out further more.
+
+```{r}
+#remove rows where no# of crimes <2
+hate_crime_typ_sumry<- crimes_data_trnspsd %>% group_by(`Crime Type`) %>% filter(tot_incident>2)
+```
+
+```{r}
+hate_crime_typ_sumry%>%group_by(victim_typ)%>%summarise(cnt_incidents=sum(tot_incident))%>%
+ggplot(aes(x=victim_typ,y=cnt_incidents))+geom_bar(stat="identity")+
+  coord_flip()
+```
+This is much better to show which groups are primary target for such crimes.
+
+iv. Next we are going to create a contigency table to find out number of incidents by County vs. Crime type.
+```{r}
+table(crimes_data_trnspsd$County, crimes_data_trnspsd$`Crime Type`) 
+```
+We are seeing here few counties have quite high incidents reported. So, we will create new dataframe with 
+
+v.
+```{r}
+ggplot(hate_crime_typ_sumry, aes(x=victim_typ,y=tot_incident, fill=hate_crime_typ_sumry$`Crime Type`))+geom_bar(stat="identity", position='dodge')+
+  labs(title = "??\n", x = "total incidentse", y = "count of incidents", legend = "crime type\n")+
+  coord_flip()
+```
+We find Anti-Jewish crime is reported more than the other types.
+
+vi.
+```{r}
+hate_crime_typ_sumry%>% filter(victim_typ=="Anti-Jewish")%>%
+ggplot(aes(x=County,y=tot_incident))+geom_bar(stat="identity")+
+  coord_flip()
+```
+
+The Kings county has more crimes reported.
+
+vii.
+```{r}
+hate_crime_typ_sumry%>% filter(County=="Kings")%>%
+  ggplot(aes(x=victim_typ,y=tot_incident))+geom_bar(stat="identity")+
+  coord_flip()
+
+```
+
+
+
+
+
+#XML
+
+##Description  
+
+
+##R Package  
+XML
+
+XML2
+
+##Data Description
+This data approach student achievement in secondary education of two Portuguese schools. The data attributes include student grades, demographic, social and school related features) and it was collected by using school reports and questionnaires.
+
+##Code & Results
+```{r}
+student_data_raw <- XML::xmlToDataFrame("student.xml")
+str(student_data_raw)
+```
+
+```{r}
+student_data_raw$school<-as.character(student_data_raw$school)
+student_data_raw$age<-as.numeric(student_data_raw$age)
+student_data_raw$G1<-as.numeric(student_data_raw$G1)
+student_data_raw$G2<-as.numeric(student_data_raw$G2)
+student_data_raw$G3<-as.numeric(student_data_raw$G3)
+```
+
+```{r}
+ggplot(student_data_raw,aes(x = sex, y = G3))+geom_boxplot()
+```
+
+```{r}
+ggplot(student_data_raw,aes(x = G1, y = G2))+geom_point()+geom_smooth(stat="smooth")
+```
+
