@@ -58,7 +58,8 @@ i. To start with we are reading the raw data file of json format.
 ```{r read_Data}
 #reading the raw data file
 
-ff_hate_crimes <- '/Users/mallikachakraborty/Downloads/ST558/558_project1/hate_crimes.json'
+#ff_hate_crimes <- '/Users/mallikachakraborty/Downloads/ST558/558_project1/hate_crimes.json'
+ff_hate_crimes <- 'https://raw.githubusercontent.com/mallikachakraborty/MSSubmissions558/master/hate_crimes.json'
 hate_crimes_data_raw<-jsonlite::fromJSON(txt=ff_hate_crimes)
 ```
 
