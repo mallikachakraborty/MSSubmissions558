@@ -1,5 +1,5 @@
 ---
-title: "ST 558 Project1_JSON"
+title: "ST 558 Project1:JSON"
 author: "Mallika Chakraborty"
 date: "10/16/2019"
 output:
@@ -14,7 +14,7 @@ library(jsonlite)
 library(rjson)
 library(tidyverse)
 library(knitr)
-setwd("/Users/mallikachakraborty/Downloads/ST558/")
+#setwd("/Users/mallikachakraborty/Downloads/ST558/")
 ```
 #JSON  
 
